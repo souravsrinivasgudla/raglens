@@ -1,5 +1,4 @@
 import base64
-import io
 from datetime import datetime
 import json
 import os
@@ -8,14 +7,14 @@ import requests
 import shutil
 import tempfile
 import traceback
-from typing import Any, Dict, List, Optional
+from typing import Dict, Optional
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
 from starlette.middleware.base import BaseHTTPMiddleware
 
 # Langchain and AI
@@ -27,19 +26,22 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 load_dotenv()
 
+
 class CatchExceptionsMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
         try:
             return await call_next(request)
         except Exception as exc:
-            return JSONResponse({"detail": str(exc), "trace": traceback.format_exc()}, status_code=500)
+            return JSONResponse(
+                {"detail": str(exc), "trace": traceback.format_exc()}, status_code=500)
+
 
 app = FastAPI(title="RAG Pipeline API")
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -65,7 +67,8 @@ embeddings = HuggingFaceEmbeddings(
 )
 
 vectorstore: Optional[Chroma] = None
-pdf_metadata: Dict[int, str] = {}  # stores page text lines for line-number lookup
+# stores page text lines for line-number lookup
+pdf_metadata: Dict[int, str] = {}
 
 
 class QueryRequest(BaseModel):
@@ -78,6 +81,7 @@ class QueryResponse(BaseModel):
     line_number: Optional[int]
     context_snippet: Optional[str]
     matched: bool
+
 
 class ImageRequest(BaseModel):
     prompt: str
@@ -92,28 +96,29 @@ def find_line_number(page_text: str, chunk_text: str) -> int:
     index = page_text.find(chunk_text[:100])  # type: ignore
     if index != -1:
         return page_text.count("\n", 0, index) + 1
-        
-    # 2. Try to find approximate position using regex by ignoring whitespace differences
+
+    # 2. Try to find approximate position using regex by ignoring whitespace
+    # differences
     clean_chunk = chunk_text.strip()
     if not clean_chunk:
         return 1
-        
+
     # Take the first ~60 characters for searching
     search_prefix = clean_chunk[:60]  # type: ignore
-    
+
     # Split by whitespace, escape each word, then join with \s+
     words = search_prefix.split()
     if not words:
         return 1
-        
+
     # Create regex pattern: word1\s+word2\s+word3...
     pattern_str = r'\s+'.join(re.escape(word) for word in words)
-    
+
     match = re.search(pattern_str, page_text, re.IGNORECASE)
     if match:
         # Count newlines in page_text up to the start of the match
         return page_text.count('\n', 0, match.start()) + 1
-        
+
     return 1
 
 
@@ -123,7 +128,9 @@ async def upload_pdf(file: UploadFile = File(...)):
     tmp_path = None
     try:
         if not file.filename.endswith(".pdf"):
-            raise HTTPException(status_code=400, detail="Only PDF files are supported.")
+            raise HTTPException(
+                status_code=400,
+                detail="Only PDF files are supported.")
 
         # Save uploaded file temporarily
         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
@@ -134,7 +141,9 @@ async def upload_pdf(file: UploadFile = File(...)):
         pages = loader.load()
 
         # Store page content for line-number lookup
-        pdf_metadata = {i + 1: page.page_content for i, page in enumerate(pages)}
+        pdf_metadata = {
+            i + 1: page.page_content for i,
+            page in enumerate(pages)}
 
         # Split into chunks while preserving page metadata
         splitter = RecursiveCharacterTextSplitter(
@@ -161,7 +170,7 @@ async def upload_pdf(file: UploadFile = File(...)):
             except Exception:
                 pass
             vectorstore = None
-            
+
             # Additional safety: try to rmtree
             try:
                 shutil.rmtree(CHROMA_PERSIST_DIR)
@@ -184,7 +193,11 @@ async def upload_pdf(file: UploadFile = File(...)):
     except Exception as e:
         import traceback
         from fastapi.responses import JSONResponse
-        return JSONResponse(status_code=500, content={"detail": str(e), "trace": traceback.format_exc()})
+        return JSONResponse(
+            status_code=500,
+            content={
+                "detail": str(e),
+                "trace": traceback.format_exc()})
 
     finally:
         if tmp_path is not None:
@@ -196,8 +209,6 @@ async def upload_pdf(file: UploadFile = File(...)):
 
 @app.post("/query", response_model=QueryResponse)
 async def query_pdf(req: QueryRequest):
-    global vectorstore
-
     if vectorstore is None:
         raise HTTPException(status_code=400, detail="No PDF uploaded yet.")
 
@@ -251,7 +262,9 @@ Question:
 """
 
     if not groq_client:
-        raise HTTPException(status_code=500, detail="Groq client not initialized. Check GROQ_API_KEY.")
+        raise HTTPException(
+            status_code=500,
+            detail="Groq client not initialized. Check GROQ_API_KEY.")
 
     completion = groq_client.chat.completions.create(
         model="llama-3.1-8b-instant",
@@ -286,14 +299,15 @@ Question:
 @app.post("/generate-image")
 async def generate_image(req: ImageRequest):
     if not HF_TOKEN:
-        raise HTTPException(status_code=400, detail="Hugging Face token not configured.")
+        raise HTTPException(status_code=400,
+                            detail="Hugging Face token not configured.")
     try:
         # Context extraction for informed prompt generation
         context = ""
         if vectorstore is not None:
             results = vectorstore.similarity_search(req.prompt, k=3)
             context = "\n".join([doc.page_content for doc in results])
-        
+
         # Use Groq to generate a descriptive, simplified visual prompt
         if groq_client:
             sys_msg = (
@@ -303,8 +317,10 @@ async def generate_image(req: ImageRequest):
                 "entire concept's structure and relationships in a single, well-organized pictorial diagram in landscape orientation. "
                 "Focus on clarity and educational value. Ensure a wide 16:9 aspect ratio layout."
             )
-            prompt = f"Concept: {req.prompt}\n\nContext from document: {context}" if context else f"Concept: {req.prompt}"
-            
+            prompt = f"Concept: {
+                req.prompt}\n\nContext from document: {context}" if context else f"Concept: {
+                req.prompt}"
+
             completion = groq_client.chat.completions.create(
                 model="llama-3.1-8b-instant",
                 messages=[
@@ -317,17 +333,23 @@ async def generate_image(req: ImageRequest):
             visual_prompt = completion.choices[0].message.content.strip()
             print(f"Generated Visual Prompt: {visual_prompt}")
         else:
-            visual_prompt = f"{req.style}, {req.theme} theme, {req.color} colors. {req.prompt}"
+            visual_prompt = f"{
+                req.style}, {
+                req.theme} theme, {
+                req.color} colors. {
+                req.prompt}"
 
         # New Hugging Face router endpoint for FLUX
         API_URL = "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell"
         headers = {"Authorization": f"Bearer {HF_TOKEN}"}
-        
-        response = requests.post(API_URL, headers=headers, json={"inputs": visual_prompt}, timeout=90)
-        
+
+        response = requests.post(
+            API_URL, headers=headers, json={
+                "inputs": visual_prompt}, timeout=90)
+
         if response.status_code != 200:
             raise Exception(f"HF API Error: {response.text}")
-            
+
         image_content = response.content
 
         # Save the generated image
@@ -344,7 +366,7 @@ async def generate_image(req: ImageRequest):
             "image": f"data:image/png;base64,{img_str}",
             "filename": filename
         }
-        
+
     except Exception as e:
         import traceback
         print(traceback.format_exc())
@@ -360,9 +382,15 @@ def health():
 async def list_images():
     try:
         os.makedirs("generated_images", exist_ok=True)
-        files = [f for f in os.listdir("generated_images") if f.endswith(".png")]
+        files = [f for f in os.listdir(
+            "generated_images") if f.endswith(".png")]
         # Sort by creation time, newest first
-        files.sort(key=lambda x: os.path.getctime(os.path.join("generated_images", x)), reverse=True)
+        files.sort(
+            key=lambda x: os.path.getctime(
+                os.path.join(
+                    "generated_images",
+                    x)),
+            reverse=True)
         return {"images": files}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -374,13 +402,14 @@ async def delete_image(filename: str):
         print(f"Delete request received for: {filename}")
         print(f"Current working directory: {os.getcwd()}")
         # Security: only allow deleting .png files from generated_images
-        if not filename.endswith(".png") or ".." in filename or "/" in filename or "\\" in filename:
+        if not filename.endswith(
+                ".png") or ".." in filename or "/" in filename or "\\" in filename:
             raise HTTPException(status_code=400, detail="Invalid filename.")
-            
+
         filepath = os.path.join("generated_images", filename)
         abs_filepath = os.path.abspath(filepath)
         print(f"Targeting file at: {abs_filepath}")
-        
+
         if os.path.exists(filepath):
             os.remove(filepath)
             print(f"Successfully deleted: {abs_filepath}")
