@@ -1,4 +1,18 @@
-backend/venv/
+# Python
 __pycache__/
 *.pyc
 .env
+venv/
+backend/chroma_db/
+backend/chroma_db_test/
+backend/generated_images/
+backend/sample.pdf
+backend/startup_error.txt
+backend/startup_log.txt
+backend/test_out*.txt
+ 
+# Node
+node_modules/
+dist/
+.DS_Store
+
