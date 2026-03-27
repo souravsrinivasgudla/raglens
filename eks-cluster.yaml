@@ -8,11 +8,19 @@ metadata:
  
 managedNodeGroups:
   - name: raglens-ng
+<<<<<<< HEAD
     instanceType: t3.small
     minSize: 2
     maxSize: 4
     desiredCapacity: 2
     volumeSize: 20
+=======
+    instanceType: t3.medium
+    minSize: 2
+    maxSize: 4
+    desiredCapacity: 2
+    volumeSize: 30
+>>>>>>> 4bb5213a355bd6dcb862f2d1306512b034291844
     iam:
       withAddonPolicies:
         albIngress: true
@@ -26,4 +34,7 @@ addons:
 iam:
   withOIDC: true
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 4bb5213a355bd6dcb862f2d1306512b034291844

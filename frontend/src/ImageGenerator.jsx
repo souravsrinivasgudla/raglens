@@ -1,9 +1,64 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const API_BASE = "http://127.0.0.1:8003";
 
 export default function ImageGenerator() {
   const [prompt, setPrompt] = useState("");
+  const [isListening, setIsListening] = useState(false);
+  const mediaRecorderRef = useRef(null);
+  const chunksRef = useRef([]);
+
+  const toggleListening = async () => {
+    if (isListening) {
+      if (mediaRecorderRef.current) {
+        mediaRecorderRef.current.stop();
+      }
+      setIsListening(false);
+    } else {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const mediaRecorder = new MediaRecorder(stream);
+        mediaRecorderRef.current = mediaRecorder;
+        chunksRef.current = [];
+
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data.size > 0) {
+            chunksRef.current.push(e.data);
+          }
+        };
+
+        mediaRecorder.onstop = async () => {
+          const audioBlob = new Blob(chunksRef.current, { type: "audio/webm" });
+          stream.getTracks().forEach((track) => track.stop());
+
+          const formData = new FormData();
+          formData.append("file", audioBlob, "recording.webm");
+
+          try {
+            const res = await fetch(`${API_BASE}/transcribe`, {
+              method: "POST",
+              body: formData,
+            });
+            if (res.ok) {
+              const data = await res.json();
+              if (data.text) {
+                setPrompt(data.text.trim());
+              }
+            } else {
+              console.error("Transcription error");
+            }
+          } catch (err) {
+            console.error("Transcription failed:", err);
+          }
+        };
+
+        mediaRecorder.start();
+        setIsListening(true);
+      } catch (err) {
+        console.error("Microphone access error:", err);
+      }
+    }
+  };
   const [style, setStyle] = useState("Technical Architecture Diagram");
   const [theme, setTheme] = useState("Professional");
   const [color, setColor] = useState("Vibrant");
@@ -137,13 +192,34 @@ export default function ImageGenerator() {
         </div>
 
         <div style={styles.inputWrapper}>
-          <textarea
-            style={styles.textarea}
-            placeholder="Describe the concept you want to visualize... (e.g., 'Kubernetes Pod Lifecycle')"
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            rows={2}
-          />
+          <div style={{ position: "relative", width: "100%" }}>
+            <textarea
+              style={{ ...styles.textarea, paddingRight: "50px" }}
+              placeholder="Describe the concept you want to visualize... (e.g., 'Kubernetes Pod Lifecycle')"
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              rows={2}
+            />
+            <button
+              onClick={toggleListening}
+              style={{
+                position: "absolute",
+                right: "12px",
+                top: "12px",
+                background: isListening ? "rgba(239, 68, 68, 0.1)" : "transparent",
+                border: "none",
+                cursor: "pointer",
+                fontSize: "1.2rem",
+                color: isListening ? "#ef4444" : "#94a3b8",
+                padding: "8px",
+                borderRadius: "50%",
+                transition: "all 0.2s"
+              }}
+              title={isListening ? "Stop listening" : "Dictate prompt"}
+            >
+              {isListening ? "⏹️" : "🎤"}
+            </button>
+          </div>
           <button
             style={{
               ...styles.generateBtn,

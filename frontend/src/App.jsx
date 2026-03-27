@@ -3,6 +3,7 @@ import UploadPage from './UploadPage'
 import ChatPage from './ChatPage'
 import Sidebar from './Sidebar'
 import ImageGenerator from './ImageGenerator'
+import VoiceAssistant from './VoiceAssistant'
 
 function App() {
   const [pdfFile, setPdfFile] = useState(null);
@@ -38,8 +39,10 @@ function App() {
             ) : (
               <ChatPage filename={pdfFile} pdfInfo={pdfInfo} onReset={handleReset} />
             )
-          ) : (
+          ) : activeTab === 'image' ? (
             <ImageGenerator />
+          ) : (
+            <VoiceAssistant />
           )}
         </main>
       </div>

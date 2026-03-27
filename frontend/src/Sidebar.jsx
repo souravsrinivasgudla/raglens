@@ -19,6 +19,12 @@ export default function Sidebar({ filename, pdfInfo, activeTab, onTabChange, onR
         >
           <span style={styles.navIcon}>🎨</span> Image Generator
         </button>
+        <button 
+          style={{...styles.navBtn, ...(activeTab === 'voice' ? styles.navBtnActive : {})}}
+          onClick={() => onTabChange('voice')}
+        >
+          <span style={styles.navIcon}>🎙️</span> Voice Assistant
+        </button>
       </div>
 
       <div style={styles.sidebarDivider} />

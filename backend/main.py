@@ -90,6 +90,10 @@ class ImageRequest(BaseModel):
     color: str = "Vibrant"
 
 
+class ChatVoiceRequest(BaseModel):
+    text: str
+
+
 def find_line_number(page_text: str, chunk_text: str) -> int:
     """Find the starting line number of a chunk within a page."""
     # 1. Try exact exact index match first
@@ -370,6 +374,57 @@ async def generate_image(req: ImageRequest):
     except Exception as e:
         import traceback
         print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/transcribe")
+async def transcribe_audio(file: UploadFile = File(...)):
+    try:
+        content = await file.read()
+        
+        sarvam_key = os.getenv("SARVAM_API_KEY", "sk_q2xuuuys_EhI3N9XNhYrhNJQZkaPOsv8w")
+        url = "https://api.sarvam.ai/speech-to-text-translate"
+        files = {"file": (file.filename, content, file.content_type)}
+        data = {"prompt": "Please transcribe the audio into English text directly."}
+        headers = {"api-subscription-key": sarvam_key}
+        
+        response = requests.post(url, files=files, data=data, headers=headers, timeout=90)
+        
+        if response.status_code != 200:
+            raise Exception(f"Sarvam API Error {response.status_code}: {response.text}")
+            
+        transcription_res = response.json()
+        print("Sarvam Transcribe Response:", transcription_res)
+        
+        # Depending on API endpoint (speech-to-text vs speech-to-text-translate), the key varies
+        text = transcription_res.get("transcript") or transcription_res.get("translated_text") or transcription_res.get("text", "")
+        return {"text": text}
+    except Exception as e:
+        import traceback
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/chat-voice")
+async def chat_voice(req: ChatVoiceRequest):
+    if not groq_client:
+        raise HTTPException(
+            status_code=500,
+            detail="Groq client not initialized. Check GROQ_API_KEY.")
+    try:
+        sys_msg = "You are a helpful, concise conversational AI assistant. Your response will be read aloud via text-to-speech, so keep it natural, friendly, and under 3 sentences."
+
+        completion = groq_client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=[
+                {"role": "system", "content": sys_msg},
+                {"role": "user", "content": req.text}
+            ],
+            temperature=0.7,
+            max_tokens=150
+        )
+        return {"response": completion.choices[0].message.content.strip()}
+    except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
