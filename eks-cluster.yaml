@@ -8,10 +8,10 @@ metadata:
  
 managedNodeGroups:
   - name: raglens-ng
-    instanceType: t3.medium
-    minSize: 3
-    maxSize: 5
-    desiredCapacity: 3
+    instanceType: t3.small
+    minSize: 2
+    maxSize: 4
+    desiredCapacity: 2
     volumeSize: 20
     iam:
       withAddonPolicies:
