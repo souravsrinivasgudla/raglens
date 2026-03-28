@@ -4,15 +4,15 @@ kind: ClusterConfig
 metadata:
   name: raglens-cluster
   region: us-east-1
-  version: "1.35"
+  version: "1.30"
  
 managedNodeGroups:
   - name: raglens-ng
 
     instanceType: t3.small
-    minSize: 2
-    maxSize: 4
-    desiredCapacity: 2
+    minSize: 1
+    maxSize: 2
+    desiredCapacity: 1
     volumeSize: 20
 
     iam:
@@ -24,8 +24,3 @@ addons:
   - name: vpc-cni
   - name: coredns
   - name: kube-proxy
- 
-iam:
-  withOIDC: true
-
-
