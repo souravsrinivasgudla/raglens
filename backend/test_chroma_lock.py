@@ -6,11 +6,11 @@ from langchain_core.documents import Document
 
 CHROMA_PERSIST_DIR = "./chroma_db_test"
 
-embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+embeddings = get_embeddings()
 doc = Document(page_content="Test data", metadata={"page": 1})
 
 # Create DB
-vectorstore = Chroma.from_documents([doc], embedding=embeddings, persist_directory=CHROMA_PERSIST_DIR)
+vectorstore = Chroma.from_documents([doc], embedding=get_embeddings(), persist_directory=CHROMA_PERSIST_DIR)
 print("Created vectorstore")
 
 # Attempt 1: Clear and delete

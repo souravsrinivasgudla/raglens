@@ -62,9 +62,17 @@ if not GROQ_API_KEY or GROQ_API_KEY == "your_groq_api_key_here":
 # Global clients
 groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 
-embeddings = HuggingFaceEmbeddings(
-    model_name="sentence-transformers/all-MiniLM-L6-v2"
-)
+_embeddings = None
+
+def get_embeddings():
+    global _embeddings
+    if _embeddings is None:
+        print("Loading HuggingFace embedding model...")
+        _embeddings = HuggingFaceEmbeddings(
+            model_name="sentence-transformers/all-MiniLM-L6-v2"
+        )
+    return _embeddings
+
 
 vectorstore: Optional[Chroma] = None
 # stores page text lines for line-number lookup
@@ -183,7 +191,7 @@ async def upload_pdf(file: UploadFile = File(...)):
 
         vectorstore = Chroma.from_documents(
             documents=chunks,
-            embedding=embeddings,
+            embedding=get_embeddings(),
             persist_directory=CHROMA_PERSIST_DIR
         )
 
