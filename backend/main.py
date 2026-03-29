@@ -36,6 +36,8 @@ class CatchExceptionsMiddleware(BaseHTTPMiddleware):
                 {"detail": str(exc), "trace": traceback.format_exc()}, status_code=500)
 
 
+API_PREFIX = "/api"
+
 app = FastAPI(title="RAG Pipeline API")
 
 app.add_middleware(
@@ -48,7 +50,7 @@ app.add_middleware(
 
 # Ensure images directory exists and mount it
 os.makedirs("generated_images", exist_ok=True)
-app.mount("/images", StaticFiles(directory="generated_images"), name="images")
+app.mount(f"{API_PREFIX}/images", StaticFiles(directory="generated_images"), name="images")
 
 app.add_middleware(CatchExceptionsMiddleware)
 
@@ -134,7 +136,7 @@ def find_line_number(page_text: str, chunk_text: str) -> int:
     return 1
 
 
-@app.post("/upload")
+@app.post(f"{API_PREFIX}/upload")
 async def upload_pdf(file: UploadFile = File(...)):
     global vectorstore, pdf_metadata
     tmp_path = None
@@ -219,7 +221,7 @@ async def upload_pdf(file: UploadFile = File(...)):
                 pass
 
 
-@app.post("/query", response_model=QueryResponse)
+@app.post(f"{API_PREFIX}/query", response_model=QueryResponse)
 async def query_pdf(req: QueryRequest):
     if vectorstore is None:
         raise HTTPException(status_code=400, detail="No PDF uploaded yet.")
@@ -308,7 +310,7 @@ Question:
     })
 
 
-@app.post("/generate-image")
+@app.post(f"{API_PREFIX}/generate-image")
 async def generate_image(req: ImageRequest):
     if not HF_TOKEN:
         raise HTTPException(status_code=400,
@@ -385,7 +387,7 @@ async def generate_image(req: ImageRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/transcribe")
+@app.post(f"{API_PREFIX}/transcribe")
 async def transcribe_audio(file: UploadFile = File(...)):
     try:
         content = await file.read()
@@ -413,7 +415,7 @@ async def transcribe_audio(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/chat-voice")
+@app.post(f"{API_PREFIX}/chat-voice")
 async def chat_voice(req: ChatVoiceRequest):
     if not groq_client:
         raise HTTPException(
@@ -436,12 +438,12 @@ async def chat_voice(req: ChatVoiceRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/health")
+@app.get(f"{API_PREFIX}/health")
 def health():
     return {"status": "ok", "vectorstore_loaded": vectorstore is not None}
 
 
-@app.get("/list-images")
+@app.get(f"{API_PREFIX}/list-images")
 async def list_images():
     try:
         os.makedirs("generated_images", exist_ok=True)
@@ -459,7 +461,7 @@ async def list_images():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.delete("/delete-image/{filename}")
+@app.delete(f"{API_PREFIX}/delete-image/{{filename}}")
 async def delete_image(filename: str):
     try:
         print(f"Delete request received for: {filename}")
