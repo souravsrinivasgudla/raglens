@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 
-const API_BASE = "http://127.0.0.1:8003";
+const API_BASE = "http://www.ssgudl.shop";
 
 export default function ImageGenerator() {
   const [prompt, setPrompt] = useState("");
