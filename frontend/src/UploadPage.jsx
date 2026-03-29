@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 
-const API_BASE = "http://www.ssgudl.shop";
+const API_BASE = "http://www.ssgudl.shop/api";
 
 export default function UploadPage({ onUploadSuccess }) {
   const [dragging, setDragging] = useState(false);
@@ -37,7 +37,7 @@ export default function UploadPage({ onUploadSuccess }) {
 
     try {
       setProgress(40);
-      const res = await fetch(`api/upload`, {
+      const res = await fetch(`${API_BASE}/upload`, {
         method: "POST",
         body: formData,
       });

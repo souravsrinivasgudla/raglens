@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-const API_BASE = "http://www.ssgudl.shop";
+const API_BASE = "http://www.ssgudl.shop/api";
 
 export default function VoiceAssistant() {
   const [inputText, setInputText] = useState("");
@@ -14,7 +14,7 @@ export default function VoiceAssistant() {
     setResponse("");
 
     try {
-      const res = await fetch(`api/chat-voice`, {
+      const res = await fetch(`${API_BASE}/chat-voice`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: inputText }),

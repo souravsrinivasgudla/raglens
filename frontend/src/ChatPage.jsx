@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 
-const API_BASE = "http://www.ssgudl.shop";
+const API_BASE = "http://www.ssgudl.shop/api";
 
 export default function ChatPage({ filename, pdfInfo, onReset }) {
   const [messages, setMessages] = useState([
@@ -29,7 +29,7 @@ export default function ChatPage({ filename, pdfInfo, onReset }) {
     setLoading(true);
 
     try {
-      const res = await fetch(`api/query`, {
+      const res = await fetch(`${API_BASE}/query`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question }),

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 
-const API_BASE = "http://www.ssgudl.shop";
+const API_BASE = "http://www.ssgudl.shop/api";
 
 export default function ImageGenerator() {
   const [prompt, setPrompt] = useState("");
@@ -35,7 +35,7 @@ export default function ImageGenerator() {
           formData.append("file", audioBlob, "recording.webm");
 
           try {
-            const res = await fetch(`api/transcribe`, {
+            const res = await fetch(`${API_BASE}/transcribe`, {
               method: "POST",
               body: formData,
             });
@@ -74,7 +74,7 @@ export default function ImageGenerator() {
 
   const fetchHistory = async () => {
     try {
-      const res = await fetch(`api/list-images`);
+      const res = await fetch(`${API_BASE}/list-images`);
       if (res.ok) {
         const data = await res.json();
         setHistory(data.images || []);
@@ -92,7 +92,7 @@ export default function ImageGenerator() {
     setSavedName("");
 
     try {
-      const res = await fetch(`api/generate-image`, {
+      const res = await fetch(`${API_BASE}/generate-image`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt, style, theme, color }),
@@ -115,7 +115,7 @@ export default function ImageGenerator() {
   };
 
   const viewPastImage = (filename) => {
-    setImage(`api/images/${filename}`);
+    setImage(`${API_BASE}/images/${filename}`);
     setSavedName(filename);
     // Scroll to top to see the image
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -128,7 +128,7 @@ export default function ImageGenerator() {
 
     try {
       console.log(`Attempting to delete: ${filename}`);
-      const res = await fetch(`api/delete-image/${filename}`, {
+      const res = await fetch(`${API_BASE}/delete-image/${filename}`, {
         method: "DELETE",
       });
 
@@ -283,7 +283,7 @@ export default function ImageGenerator() {
                 onClick={() => viewPastImage(filename)}
               >
                 <img 
-                  src={`api/images/${filename}`} 
+                  src={`${API_BASE}/images/${filename}`} 
                   alt={filename} 
                   style={styles.thumbnail} 
                 />
