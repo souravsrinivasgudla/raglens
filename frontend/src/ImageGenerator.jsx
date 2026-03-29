@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 
-const API_BASE = "http://www.ssgudl.shop/api";
+const API_BASE = "/api";
 
 export default function ImageGenerator() {
   const [prompt, setPrompt] = useState("");
@@ -256,7 +256,7 @@ export default function ImageGenerator() {
                 <div style={styles.saveBadge}>
                   <span style={{ fontSize: "0.8rem" }}>💾 Saved as {savedName}</span>
                 </div>
-                <button 
+                <button
                   onClick={(e) => handleDeleteImage(e, savedName)}
                   style={styles.deleteBtn}
                   title="Delete Image"
@@ -277,21 +277,21 @@ export default function ImageGenerator() {
           <h3 style={styles.historyTitle}>Previous Visuals</h3>
           <div style={styles.gallery}>
             {history.map((filename) => (
-              <div 
-                key={filename} 
+              <div
+                key={filename}
                 style={styles.thumbnailWrapper}
                 onClick={() => viewPastImage(filename)}
               >
-                <img 
-                  src={`${API_BASE}/images/${filename}`} 
-                  alt={filename} 
-                  style={styles.thumbnail} 
+                <img
+                  src={`${API_BASE}/images/${filename}`}
+                  alt={filename}
+                  style={styles.thumbnail}
                 />
                 <div style={styles.thumbnailOverlay}>
                   <span>View</span>
                 </div>
-                <button 
-                  style={styles.thumbDeleteBtn} 
+                <button
+                  style={styles.thumbDeleteBtn}
                   onClick={(e) => handleDeleteImage(e, filename)}
                   title="Delete from history"
                 >

@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 
-const API_BASE = "http://www.ssgudl.shop/api";
+const API_BASE = "/api";
 
 export default function UploadPage({ onUploadSuccess }) {
   const [dragging, setDragging] = useState(false);

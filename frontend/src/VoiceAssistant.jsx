@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-const API_BASE = "http://www.ssgudl.shop/api";
+const API_BASE = "/api";
 
 export default function VoiceAssistant() {
   const [inputText, setInputText] = useState("");
@@ -35,15 +35,15 @@ export default function VoiceAssistant() {
 
   const speak = (text) => {
     if (!window.speechSynthesis) return;
-    
+
     // Cancel any ongoing speech
     window.speechSynthesis.cancel();
-    
+
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.onstart = () => setIsSpeaking(true);
     utterance.onend = () => setIsSpeaking(false);
     utterance.onerror = () => setIsSpeaking(false);
-    
+
     window.speechSynthesis.speak(utterance);
   };
 
@@ -85,8 +85,8 @@ export default function VoiceAssistant() {
             <div style={styles.responseHeader}>
               <span style={styles.aiLabel}>AI Response</span>
               {isSpeaking && <div style={styles.speakingIndicator}>● Speaking...</div>}
-              <button 
-                onClick={isSpeaking ? stopSpeaking : () => speak(response)} 
+              <button
+                onClick={isSpeaking ? stopSpeaking : () => speak(response)}
                 style={styles.speakBtn}
               >
                 {isSpeaking ? "⏹ Stop" : "🔊 Replay"}

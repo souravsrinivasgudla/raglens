@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-
-const API_BASE = "http://www.ssgudl.shop/api";
+const API_BASE = "/api";
 
 export default function ChatPage({ filename, pdfInfo, onReset }) {
   const [messages, setMessages] = useState([
