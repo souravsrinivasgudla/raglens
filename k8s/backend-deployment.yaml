@@ -30,7 +30,7 @@ spec:
               memory: "512Mi"
           readinessProbe:
             httpGet:
-              path: /health
+              path: /api/health
               port: 8003
             initialDelaySeconds: 60
             periodSeconds: 10
