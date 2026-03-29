@@ -14,7 +14,7 @@ export default function VoiceAssistant() {
     setResponse("");
 
     try {
-      const res = await fetch(`${API_BASE}/chat-voice`, {
+      const res = await fetch(`api/chat-voice`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: inputText }),

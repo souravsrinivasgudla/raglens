@@ -37,7 +37,7 @@ export default function UploadPage({ onUploadSuccess }) {
 
     try {
       setProgress(40);
-      const res = await fetch(`${API_BASE}/upload`, {
+      const res = await fetch(`api/upload`, {
         method: "POST",
         body: formData,
       });

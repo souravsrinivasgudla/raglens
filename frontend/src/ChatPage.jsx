@@ -29,7 +29,7 @@ export default function ChatPage({ filename, pdfInfo, onReset }) {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE}/query`, {
+      const res = await fetch(`api/query`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question }),
