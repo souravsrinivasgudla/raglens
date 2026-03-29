@@ -32,7 +32,15 @@ spec:
             httpGet:
               path: /api/health
               port: 8003
-            initialDelaySeconds: 10
+            initialDelaySeconds: 30
             periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 5
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 8003
+            initialDelaySeconds: 30
+            periodSeconds: 20
 
 
