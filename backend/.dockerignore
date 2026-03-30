@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+.git
+node_modules/
+venv/
+
+# 🔥 VERY IMPORTANT FOR YOU
+chromadb/
+data/
+uploads/
+*.pdf
+*.log

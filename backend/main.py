@@ -56,7 +56,7 @@ app.add_middleware(CatchExceptionsMiddleware)
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 HF_TOKEN = os.getenv("HF_TOKEN")
-CHROMA_PERSIST_DIR = "./chroma_db"
+CHROMA_PERSIST_DIR = "/app/raglens-chroma-db"
 
 if not GROQ_API_KEY or GROQ_API_KEY == "your_groq_api_key_here":
     print("WARNING: GROQ_API_KEY is not set correctly in .env")
@@ -196,6 +196,7 @@ async def upload_pdf(file: UploadFile = File(...)):
             embedding=get_embeddings(),
             persist_directory=CHROMA_PERSIST_DIR
         )
+        vectorstore.persist()
 
         return {
             "message": "PDF uploaded and indexed successfully.",
