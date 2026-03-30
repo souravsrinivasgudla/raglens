@@ -18,12 +18,22 @@ spec:
           image: souravsrinivas2912/raglens-backend:latest
           ports:
             - containerPort: 8000
-          volumeMounts:
-            - name: chromadb-storage
-              mountPath: /app/raglens-chroma-db
-            - name: generated-images
-              mountPath: /app/generated-images
           env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: raglens-secrets
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: raglens-secrets
+                  key: AWS_SECRET_ACCESS_KEY
+            - name: SARVAM_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: raglens-secrets
+                  key: SARVAM_API_KEY
             - name: ENV
               value: production
           resources:
@@ -55,10 +65,3 @@ spec:
               port: 8000
             failureThreshold: 30
             periodSeconds: 10
-      volumes:
-        - name: chromadb-storage
-          persistentVolumeClaim:
-            claimName: raglens-chromadb-pvc
-        - name: generated-images
-          persistentVolumeClaim:
-            claimName: raglens-images-pvc

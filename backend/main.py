@@ -24,6 +24,31 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
+
+#s3
+import boto3
+from io import BytesIO
+
+# S3 CONFIG
+S3_BUCKET = "raglens-uploads"
+
+s3 = boto3.client(
+    "s3",
+    aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+    aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+    region_name="ap-south-1"
+)
+
+def upload_to_s3(file_obj, filename, content_type):
+    s3.upload_fileobj(
+        file_obj,
+        S3_BUCKET,
+        filename,
+        ExtraArgs={"ContentType": content_type}
+    )
+    return f"https://{S3_BUCKET}.s3.amazonaws.com/{filename}"
+
+
 load_dotenv()
 
 
@@ -48,15 +73,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Ensure images directory exists and mount it
-os.makedirs("generated_images", exist_ok=True)
-app.mount(f"{API_PREFIX}/images", StaticFiles(directory="generated_images"), name="images")
-
 app.add_middleware(CatchExceptionsMiddleware)
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 HF_TOKEN = os.getenv("HF_TOKEN")
-CHROMA_PERSIST_DIR = "/app/raglens-chroma-db"
 
 if not GROQ_API_KEY or GROQ_API_KEY == "your_groq_api_key_here":
     print("WARNING: GROQ_API_KEY is not set correctly in .env")
@@ -171,32 +191,10 @@ async def upload_pdf(file: UploadFile = File(...)):
         for chunk in chunks:
             chunk.metadata["page_number"] = chunk.metadata.get("page", 0) + 1
 
-        # Clear old vectorstore and create new one
-        if os.path.exists(CHROMA_PERSIST_DIR):
-            if vectorstore is not None:
-                try:
-                    vectorstore.delete_collection()
-                except Exception:
-                    pass
-            try:
-                import chromadb
-                chromadb.api.client.SharedSystemClient.clear_system_cache()
-            except Exception:
-                pass
-            vectorstore = None
-
-            # Additional safety: try to rmtree
-            try:
-                shutil.rmtree(CHROMA_PERSIST_DIR)
-            except Exception as e:
-                print(f"Warning: could not delete {CHROMA_PERSIST_DIR}: {e}")
-
         vectorstore = Chroma.from_documents(
             documents=chunks,
-            embedding=get_embeddings(),
-            persist_directory=CHROMA_PERSIST_DIR
+            embedding=get_embeddings()
         )
-        vectorstore.persist()
 
         return {
             "message": "PDF uploaded and indexed successfully.",
@@ -368,17 +366,11 @@ async def generate_image(req: ImageRequest):
         image_content = response.content
 
         # Save the generated image
-        os.makedirs("generated_images", exist_ok=True)
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"gen_{timestamp}.png"
-        filepath = os.path.join("generated_images", filename)
-        with open(filepath, "wb") as f:
-            f.write(image_content)
-        print(f"Image saved to: {filepath}")
-
-        img_str = base64.b64encode(image_content).decode()
+        filename = f"gen_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+        file_obj = BytesIO(image_content)
+        image_url = upload_to_s3(file_obj, filename, "image/png")
         return {
-            "image": f"data:image/png;base64,{img_str}",
+            "image_url": image_url,
             "filename": filename
         }
 
@@ -393,7 +385,8 @@ async def transcribe_audio(file: UploadFile = File(...)):
     try:
         content = await file.read()
         
-        sarvam_key = os.getenv("SARVAM_API_KEY", "sk_q2xuuuys_EhI3N9XNhYrhNJQZkaPOsv8w")
+        sarvam_key = os.getenv("SARVAM_API_KEY")
+       # sarvam_key = os.getenv("SARVAM_API_KEY", "sk_q2xuuuys_EhI3N9XNhYrhNJQZkaPOsv8w")
         url = "https://api.sarvam.ai/speech-to-text-translate"
         files = {"file": (file.filename, content, file.content_type)}
         data = {"prompt": "Please transcribe the audio into English text directly."}
@@ -447,42 +440,21 @@ def health():
 @app.get(f"{API_PREFIX}/list-images")
 async def list_images():
     try:
-        os.makedirs("generated_images", exist_ok=True)
-        files = [f for f in os.listdir(
-            "generated_images") if f.endswith(".png")]
-        # Sort by creation time, newest first
-        files.sort(
-            key=lambda x: os.path.getctime(
-                os.path.join(
-                    "generated_images",
-                    x)),
-            reverse=True)
+        response = s3.list_objects_v2(Bucket=S3_BUCKET)
+
+        files = []
+        if "Contents" in response:
+            for obj in response["Contents"]:
+                if obj["Key"].endswith(".png"):
+                    files.append(obj["Key"])
         return {"images": files}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @app.delete(f"{API_PREFIX}/delete-image/{{filename}}")
 async def delete_image(filename: str):
     try:
-        print(f"Delete request received for: {filename}")
-        print(f"Current working directory: {os.getcwd()}")
-        # Security: only allow deleting .png files from generated_images
-        if not filename.endswith(
-                ".png") or ".." in filename or "/" in filename or "\\" in filename:
-            raise HTTPException(status_code=400, detail="Invalid filename.")
-
-        filepath = os.path.join("generated_images", filename)
-        abs_filepath = os.path.abspath(filepath)
-        print(f"Targeting file at: {abs_filepath}")
-
-        if os.path.exists(filepath):
-            os.remove(filepath)
-            print(f"Successfully deleted: {abs_filepath}")
-            return {"message": f"Deleted {filename}"}
-        else:
-            print(f"File NOT found at: {abs_filepath}")
-            raise HTTPException(status_code=404, detail="Image not found.")
+        s3.delete_object(Bucket=S3_BUCKET, Key=filename)
+        return {"message": f"Deleted {filename}"}
     except Exception as e:
-        print(f"Delete error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
