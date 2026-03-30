@@ -1,6 +1,6 @@
 import requests
 
-url = "http://127.0.0.1:8003/query"
+url = "http://127.0.0.1:8000/query"
 payload = {"question": "what is genai?"}
 try:
     res = requests.post(url, json=payload)

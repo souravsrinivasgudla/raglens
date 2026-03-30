@@ -8,7 +8,7 @@ pdf.set_font("Arial", size=12)
 pdf.cell(200, 10, txt="Hello World!", ln=1, align="C")
 pdf.output("sample.pdf")
 
-url = "http://127.0.0.1:8003/upload"
+url = "http://127.0.0.1:8000/upload"
 with open("sample.pdf", "rb") as f:
     files = {"file": ("sample.pdf", f, "application/pdf")}
     res = requests.post(url, files=files)

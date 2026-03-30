@@ -17,7 +17,7 @@ COPY . .
 # Remove test/dev files from the image
 RUN rm -f sample.pdf startup_error.txt startup_log.txt test_*.py
 
-EXPOSE 8003
+EXPOSE 8000
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8003"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
 
