@@ -30,9 +30,7 @@ COPY --from=builder /root/.local /root/.local
 RUN rm -rf /root/.local/lib/python3.12/site-packages/nvidia* || true
 
 # Copy application code
-COPY main.py .
-COPY app/ app/
-
+COPY . .
 EXPOSE 8000
 
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
