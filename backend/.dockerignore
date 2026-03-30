@@ -1,15 +1,30 @@
+# Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+
+# Env
 .env
-.git
-node_modules/
 venv/
 
-# 🔥 VERY IMPORTANT FOR YOU
+# Git
+.git
+
+# Node
+node_modules/
+
+# Logs
+*.log
+
+# 🔥 CRITICAL FOR YOU
 chromadb/
+chroma/
+raglens-chroma-db/
 data/
 uploads/
 *.pdf
-*.log
+*.csv
+
+# OS
+.DS_Store
