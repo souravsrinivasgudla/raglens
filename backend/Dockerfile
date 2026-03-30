@@ -22,8 +22,7 @@ RUN apt-get purge -y build-essential \
     && apt-get autoremove -y
 
 # Copy ONLY necessary files
-COPY main.py .
-COPY app/ ./app/
+COPY . .
 
 # (Adjust above depending on your structure)
 
