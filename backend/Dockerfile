@@ -1,30 +1,37 @@
+# -------- STAGE 1: BUILDER --------
+FROM python:3.12-slim AS builder
+
+WORKDIR /app
+
+# Install build tools (only for building deps)
+RUN apt-get update && apt-get install -y build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+
+# 🔥 Install CPU-only torch FIRST (prevents GPU bloat)
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu && \
+    pip install --no-cache-dir --user -r requirements.txt
+
+# -------- STAGE 2: FINAL --------
 FROM python:3.12-slim
 
 WORKDIR /app
 
+ENV PATH=/root/.local/bin:$PATH
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Install only required system deps
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+# Copy only installed Python packages
+COPY --from=builder /root/.local /root/.local
 
-# Install Python deps first (cache optimization)
-COPY requirements.txt .
+# 🔥 Remove any accidental GPU leftovers (safety cleanup)
+RUN rm -rf /root/.local/lib/python3.12/site-packages/nvidia* || true
 
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
-
-# Remove build tools AFTER install
-RUN apt-get purge -y build-essential \
-    && apt-get autoremove -y
-
-# Copy ONLY necessary files
-COPY . .
-
-# (Adjust above depending on your structure)
+# Copy application code
+COPY main.py .
+COPY app/ app/
 
 EXPOSE 8000
 
