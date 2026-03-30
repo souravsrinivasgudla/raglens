@@ -4,6 +4,7 @@ metadata:
   name: raglens-chromadb-pvc
   namespace: raglens
 spec:
+  storageClassName: standard
   accessModes:
     - ReadWriteOnce
   resources:
