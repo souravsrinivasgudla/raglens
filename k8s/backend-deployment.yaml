@@ -22,18 +22,28 @@ spec:
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
-                  name: raglens-secrets
+                  name: raglens-aws
                   key: AWS_ACCESS_KEY_ID
             - name: AWS_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
-                  name: raglens-secrets
+                  name: raglens-aws
                   key: AWS_SECRET_ACCESS_KEY
             - name: SARVAM_API_KEY
               valueFrom:
                 secretKeyRef:
-                  name: raglens-secrets
+                  name: raglens-env
                   key: SARVAM_API_KEY
+            - name: GROQ_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: raglens-env
+                  key: GROQ_API_KEY
+            - name: HF_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: raglens-env
+                  key: HF_TOKEN
             - name: ENV
               value: production
           resources:
