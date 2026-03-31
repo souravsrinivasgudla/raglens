@@ -7,7 +7,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-COPY backend/requirements.txt .
+COPY requirements.txt .
 
 # 🔥 Install CPU-only torch FIRST (prevents GPU bloat)
 RUN pip install --no-cache-dir --upgrade pip && \
