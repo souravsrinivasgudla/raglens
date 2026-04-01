@@ -12,7 +12,7 @@ COPY requirements.txt .
 # 🔥 Install CPU-only torch FIRST (prevents GPU bloat)
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu && \
-    pip install --no-cache-dir --user -r requirements.txt
+    pip install --no-cache-dir -r requirements.txt
 
 # -------- STAGE 2: FINAL --------
 FROM python:3.12-slim

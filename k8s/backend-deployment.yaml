@@ -16,6 +16,7 @@ spec:
       containers:
         - name: backend
           image: souravsrinivas2912/raglens-backend:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8000
           env:
