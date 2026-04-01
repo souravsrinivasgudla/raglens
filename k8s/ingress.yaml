@@ -8,8 +8,13 @@ metadata:
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
+    cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
   ingressClassName: alb
+  tls:
+    - hosts:
+        - www.ssgudl.shop
+      secretName: raglens-tls
   rules:
     - host: www.ssgudl.shop
       http:
