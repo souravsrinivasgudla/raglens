@@ -44,7 +44,7 @@ def upload_to_s3(file_obj, filename, content_type):
         file_obj,
         S3_BUCKET,
         filename,
-        ExtraArgs={"ContentType": content_type}
+        ExtraArgs={"ACL": "public-read"}
     )
     return f"https://{S3_BUCKET}.s3.amazonaws.com/{filename}"
 
