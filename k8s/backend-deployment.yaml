@@ -75,8 +75,8 @@ spec:
               path: /api/health
               port: 8000
             failureThreshold: 30
-            periodSeconds: 5
-            failureThreshold: 12
+            periodSeconds: 10
+            failureThreshold: 5
           resources:
             requests:
               memory: "256Mi"

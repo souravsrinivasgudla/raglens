@@ -13,4 +13,5 @@ sentence-transformers
 chromadb
 huggingface_hub
 requests
+boto3
 typing-extensions>=4.8.0
