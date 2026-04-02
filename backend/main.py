@@ -44,7 +44,10 @@ def upload_to_s3(file_obj, filename, content_type):
         file_obj,
         S3_BUCKET,
         filename,
-        ExtraArgs={"ACL": "public-read"}
+        ExtraArgs={
+            "ContentType": content_type,
+            "CacheControl": "max-age=31536000, public"
+        }
     )
     return f"https://{S3_BUCKET}.s3.amazonaws.com/{filename}"
 
