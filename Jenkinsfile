@@ -3,35 +3,30 @@ pipeline {
 
     environment {
         DOCKER_USERNAME = "souravsrinivas2912"
+        DOCKER_PASSWORD = credentials('dockerhub-password')
+
         BACKEND_IMAGE = "souravsrinivas2912/raglens-backend:latest"
         FRONTEND_IMAGE = "souravsrinivas2912/raglens-frontend:latest"
     }
 
     stages {
 
-        stage('Checkout Code') {
+        stage('Checkout') {
             steps {
                 git branch: 'main',
-                url: 'https://github.com/YOUR_GITHUB_USERNAME/YOUR_REPO.git'
+                url: 'https://github.com/YOUR_USERNAME/YOUR_REPO.git'
             }
         }
 
         stage('Docker Login') {
             steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'dockerhub-creds',
-                    usernameVariable: 'DOCKER_USER',
-                    passwordVariable: 'DOCKER_PASS'
-                )]) {
-
-                    sh '''
-                    echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                    '''
-                }
+                sh '''
+                echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                '''
             }
         }
 
-        stage('Build Backend Image') {
+        stage('Build Backend') {
             steps {
                 sh '''
                 docker build -t $BACKEND_IMAGE ./backend
@@ -39,7 +34,7 @@ pipeline {
             }
         }
 
-        stage('Push Backend Image') {
+        stage('Push Backend') {
             steps {
                 sh '''
                 docker push $BACKEND_IMAGE
@@ -47,7 +42,7 @@ pipeline {
             }
         }
 
-        stage('Build Frontend Image') {
+        stage('Build Frontend') {
             steps {
                 sh '''
                 docker build -t $FRONTEND_IMAGE ./frontend
@@ -55,7 +50,7 @@ pipeline {
             }
         }
 
-        stage('Push Frontend Image') {
+        stage('Push Frontend') {
             steps {
                 sh '''
                 docker push $FRONTEND_IMAGE
@@ -67,14 +62,6 @@ pipeline {
     post {
         always {
             sh 'docker logout'
-        }
-
-        success {
-            echo 'Docker images built and pushed successfully!'
-        }
-
-        failure {
-            echo 'Pipeline failed!'
         }
     }
 }
